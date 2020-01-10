@@ -14,52 +14,23 @@ function ContextProvider({ children }) {
   const [productItems, setProductItems] = useState([]);
 
   function applyChangeStream() {
+    // applied filter via pipeline expression on mongo server
     changeStream().then(stream =>
       stream.onNext(
         event => {
           console.log(event);
-          if (event.operationType === "insert") {
-            setProductItems(prevItems => {
-              const insertedProduct = {
-                name: event.fullDocument.name,
-                description: event.fullDocument.description,
-                price: String(event.fullDocument.price),
-                id: String(event.fullDocument._id)
-              };
 
-              console.log("inserted via stream: ", insertedProduct);
-              return [...prevItems, insertedProduct];
-            });
-            //console.log("product items after stream op.", productItems);
-          }
-          if (event.operationType === "delete") {
-            setProductItems(prevItems =>
-              prevItems.filter(
-                item => item.id !== String(event.documentKey._id)
-              )
-            );
-          }
-          if (
-            event.operationType === "update" ||
-            event.operationType === "replace"
-          ) {
-            const replacedOrUpdatedProductItem = {
-              id: String(event.fullDocument._id),
-              price: String(event.fullDocument.price),
+          setProductItems(prevItems => {
+            const insertedProduct = {
               name: event.fullDocument.name,
-              description: event.fullDocument.description
+              description: event.fullDocument.description,
+              price: String(event.fullDocument.price),
+              id: String(event.fullDocument._id)
             };
-            setProductItems(prevItems => {
-              const itemIndex = prevItems.findIndex(
-                item => item.id === String(event.documentKey._id)
-              );
-              return [
-                ...prevItems.slice(0, itemIndex),
-                replacedOrUpdatedProductItem,
-                ...prevItems.slice(itemIndex + 1)
-              ];
-            });
-          }
+
+            console.log("inserted via stream: ", insertedProduct);
+            return [...prevItems, insertedProduct];
+          });
         },
         stream.onError(err => {
           console.log(err.message);

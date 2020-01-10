@@ -30,10 +30,15 @@ async function changeStream() {
     "shop-app-service"
   );
 
+  const pipelineMatchExpression = {
+    "fullDocument.name": { $exists: true },
+    "fullDocument.price": { $exists: true },
+    "operationType": "insert"
+  };
   const stream = await client
     .db("shop")
     .collection("products")
-    .watch();
+    .watch(pipelineMatchExpression);
 
   return stream;
 }
